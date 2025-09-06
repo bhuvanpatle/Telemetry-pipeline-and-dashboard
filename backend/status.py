@@ -121,8 +121,6 @@ async def startup_event():
 @app.on_event("shutdown")
 async def shutdown_event():
     """Cleanup on shutdown"""
-    global influx_client, mqtt_client, replay_process
-
     if mqtt_client:
         mqtt_client.loop_stop()
         mqtt_client.disconnect()
@@ -272,8 +270,6 @@ async def start_replay(file_path: str = Query(...), speed: float = Query(1.0)):
 @app.post("/replay/stop")
 async def stop_replay():
     """Stop running replay"""
-    global replay_process
-
     if replay_process and replay_process.poll() is None:
         try:
             replay_process.terminate()
@@ -291,8 +287,6 @@ async def stop_replay():
 @app.get("/replay/status")
 async def replay_status():
     """Get replay process status"""
-    global replay_process
-
     if replay_process:
         if replay_process.poll() is None:
             return {

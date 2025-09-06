@@ -9,7 +9,6 @@ python test_ahu_logic.py
 pytest test_ahu_logic.py -v
 """
 
-from simulator.ahu_simulator import AHUSimulator, AHUState, PIDController
 import sys
 import os
 import pytest
@@ -19,6 +18,8 @@ from unittest.mock import Mock, patch
 
 # Add parent directory to path to import simulator modules
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+from simulator.ahu_simulator import AHUSimulator, AHUState, PIDController
 
 
 class TestPIDController:

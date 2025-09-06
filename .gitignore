@@ -1,0 +1,19 @@
+# Large CSV data files - these exceed GitHub's file size limits
+Building Data Genome Project 2/electricity_cleaned.csv
+Building Data Genome Project 2/electricity.csv
+Building Data Genome Project 2/chilledwater.csv
+Building Data Genome Project 2/chilledwater_cleaned.csv
+Building Data Genome Project 2/gas_cleaned.csv
+Building Data Genome Project 2/gas.csv
+Building Data Genome Project 2/hotwater_cleaned.csv
+Building Data Genome Project 2/hotwater.csv
+Building Data Genome Project 2/irrigation_cleaned.csv
+Building Data Genome Project 2/irrigation.csv
+Building Data Genome Project 2/solar_cleaned.csv
+Building Data Genome Project 2/solar.csv
+Building Data Genome Project 2/steam_cleaned.csv
+Building Data Genome Project 2/steam.csv
+Building Data Genome Project 2/water_cleaned.csv
+Building Data Genome Project 2/water.csv
+
+# Small files like metadata.csv and weather.csv will be tracked

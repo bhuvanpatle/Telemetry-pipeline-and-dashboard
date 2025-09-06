@@ -1,0 +1,19 @@
+name: telemetry-pipeline
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+      - paho-mqtt==1.6.1
+      - influxdb-client==1.38.0
+      - requests==2.31.0
+      - PyYAML==6.0.1
+      - numpy==1.24.3
+      - pandas==2.0.3
+      - flask==2.3.3
+      - fastapi==0.103.1
+      - uvicorn==0.23.2
+      - pytest==7.4.2
+      - python-dotenv==1.0.0

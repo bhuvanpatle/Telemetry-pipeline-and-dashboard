@@ -1,0 +1,230 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Trigger on semantic version tags (e.g., v1.0.0, v2.1.3)
+
+permissions:
+  contents: write
+  packages: read
+
+env:
+  NODE_VERSION: '18'
+  PYTHON_VERSION: '3.10'
+
+jobs:
+  # Create GitHub release with artifacts
+  create-release:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for changelog generation
+
+  - name: Get tag information
+        id: tag_info
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+          echo "release_name=Release $TAG_NAME" >> $GITHUB_OUTPUT
+          
+          # Check if this is a pre-release (contains alpha, beta, rc)
+          if [[ $TAG_NAME =~ (alpha|beta|rc) ]]; then
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+          fi
+
+  - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+  - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+  - name: Install dependencies
+        run: |
+          echo "Installing frontend dependencies..."
+          cd frontend
+          npm ci
+          
+          echo "Installing Python dependencies..."
+          cd ..
+          pip install -r requirements.txt
+
+  - name: Build frontend release
+        run: |
+          echo "Building frontend for release ${{ steps.tag_info.outputs.tag_name }}..."
+          cd frontend
+          
+          # Set version in build
+          export VITE_APP_VERSION="${{ steps.tag_info.outputs.tag_name }}"
+          export VITE_BUILD_DATE="$(date -u)"
+          
+          npm run build
+          
+          echo "✅ Frontend build completed"
+          
+          # Create frontend archive
+          cd dist
+          tar -czf ../../frontend-${{ steps.tag_info.outputs.tag_name }}.tar.gz *
+          cd ../..
+
+  - name: Package Grafana dashboards
+        run: |
+          echo "Packaging Grafana dashboards..."
+          cd grafana/dashboards
+          tar -czf ../../grafana-dashboards-${{ steps.tag_info.outputs.tag_name }}.tar.gz *.json
+          cd ../..
+
+  - name: Create Python source distribution
+        run: |
+          echo "Creating Python source package..."
+          
+          # Create a simple setup.py if it doesn't exist
+          if [ ! -f setup.py ]; then
+            cat > setup.py << EOF
+from setuptools import setup, find_packages
+
+setup(
+    name="telemetry-pipeline-dashboard",
+    version="${{ steps.tag_info.outputs.tag_name }}",
+    packages=find_packages(),
+    install_requires=open("requirements.txt").read().splitlines(),
+    author="Building Management Team",
+    description="Telemetry Pipeline and Dashboard for Building Management Systems",
+    long_description=open("README.md").read(),
+    long_description_content_type="text/markdown",
+)
+EOF
+          fi
+          
+          python setup.py sdist
+          mv dist/telemetry-pipeline-dashboard-*.tar.gz ./python-source-${{ steps.tag_info.outputs.tag_name }}.tar.gz
+
+  - name: Generate changelog
+        id: changelog
+        run: |
+          echo "Generating changelog from git commits..."
+          
+          # Get previous tag
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          
+          if [ -n "$PREV_TAG" ]; then
+            echo "## 📋 Changes since $PREV_TAG" > CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            
+            # Get commits since last tag
+            git log --pretty=format:"- %s (%an)" $PREV_TAG..HEAD >> CHANGELOG.md
+          else
+            echo "## 📋 Initial Release" > CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            echo "This is the first release of the Telemetry Pipeline and Dashboard." >> CHANGELOG.md
+          fi
+          
+          echo "" >> CHANGELOG.md
+          echo "## 🚀 Features" >> CHANGELOG.md
+          echo "- 🏗️ Complete building telemetry pipeline" >> CHANGELOG.md
+          echo "- 📊 Interactive React dashboard" >> CHANGELOG.md
+          echo "- 🔄 MQTT to InfluxDB data collection" >> CHANGELOG.md
+          echo "- 📈 Grafana visualization dashboards" >> CHANGELOG.md
+          echo "- 🧪 Comprehensive test suite" >> CHANGELOG.md
+          echo "- 🐳 Docker Compose deployment" >> CHANGELOG.md
+          
+          echo "" >> CHANGELOG.md
+          echo "## 📦 Release Assets" >> CHANGELOG.md
+          echo "- **frontend-${{ steps.tag_info.outputs.tag_name }}.tar.gz**: Production frontend build" >> CHANGELOG.md
+          echo "- **grafana-dashboards-${{ steps.tag_info.outputs.tag_name }}.tar.gz**: Grafana dashboard definitions" >> CHANGELOG.md
+          echo "- **python-source-${{ steps.tag_info.outputs.tag_name }}.tar.gz**: Python source distribution" >> CHANGELOG.md
+          
+          # Store changelog for release
+          {
+            echo 'CHANGELOG<<EOF'
+            cat CHANGELOG.md
+            echo 'EOF'
+          } >> $GITHUB_OUTPUT
+
+  - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.tag_info.outputs.tag_name }}
+          release_name: ${{ steps.tag_info.outputs.release_name }}
+          body: ${{ steps.changelog.outputs.CHANGELOG }}
+          draft: false
+          prerelease: ${{ steps.tag_info.outputs.is_prerelease }}
+
+  - name: Upload Frontend Build
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./frontend-${{ steps.tag_info.outputs.tag_name }}.tar.gz
+          asset_name: frontend-${{ steps.tag_info.outputs.tag_name }}.tar.gz
+          asset_content_type: application/gzip
+
+  - name: Upload Grafana Dashboards
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./grafana-dashboards-${{ steps.tag_info.outputs.tag_name }}.tar.gz
+          asset_name: grafana-dashboards-${{ steps.tag_info.outputs.tag_name }}.tar.gz
+          asset_content_type: application/gzip
+
+  - name: Upload Python Source
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./python-source-${{ steps.tag_info.outputs.tag_name }}.tar.gz
+          asset_name: python-source-${{ steps.tag_info.outputs.tag_name }}.tar.gz
+          asset_content_type: application/gzip
+
+  - name: Release Summary
+        run: |
+          echo "## 🎉 Release ${{ steps.tag_info.outputs.tag_name }} Created Successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Release Information" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag**: ${{ steps.tag_info.outputs.tag_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Type**: ${{ steps.tag_info.outputs.is_prerelease == 'true' && 'Pre-release' || 'Stable Release' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL**: ${{ steps.create_release.outputs.html_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📁 Release Assets" >> $GITHUB_STEP_SUMMARY
+          echo "- 🌐 Frontend build (production-ready)" >> $GITHUB_STEP_SUMMARY
+          echo "- 📊 Grafana dashboards" >> $GITHUB_STEP_SUMMARY
+          echo "- 🐍 Python source distribution" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔗 Quick Links" >> $GITHUB_STEP_SUMMARY
+          echo "- [📋 View Release](${{ steps.create_release.outputs.html_url }})" >> $GITHUB_STEP_SUMMARY
+          echo "- [📥 Download Assets](${{ steps.create_release.outputs.html_url }})" >> $GITHUB_STEP_SUMMARY
+          echo "- [📝 Repository](${{ github.server_url }}/${{ github.repository }})" >> $GITHUB_STEP_SUMMARY
+
+  # Optional: Auto-deploy to GitHub Pages on stable releases
+  deploy-release-frontend:
+    runs-on: ubuntu-latest
+    needs: create-release
+    if: "!contains(github.ref, 'alpha') && !contains(github.ref, 'beta') && !contains(github.ref, 'rc')"
+    
+    steps:
+  - name: Trigger frontend deployment
+        run: |
+          echo "Triggering frontend deployment for stable release..."
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "${{ github.api_url }}/repos/${{ github.repository }}/actions/workflows/deploy_frontend.yml/dispatches" \
+            -d '{"ref":"main","inputs":{"deploy_reason":"Automatic deployment for release ${{ github.ref_name }}"}}'

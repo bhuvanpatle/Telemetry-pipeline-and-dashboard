@@ -1,0 +1,87 @@
+{
+  "telemetry": [
+    {
+      "ts": 1690000000000,
+      "device": "ahu1",
+      "building": "demo_building",
+      "points": {
+        "outside_temp": 29.4,
+        "supply_temp": 18.2,
+        "setpoint": 18.0,
+        "vfd_speed": 54.1,
+        "fan_status": "ON",
+        "alarm": null
+      }
+    },
+    {
+      "ts": 1690000060000,
+      "device": "ahu1", 
+      "building": "demo_building",
+      "points": {
+        "outside_temp": 29.1,
+        "supply_temp": 18.1,
+        "setpoint": 18.0,
+        "vfd_speed": 52.3,
+        "fan_status": "ON",
+        "alarm": null
+      }
+    },
+    {
+      "ts": 1690000120000,
+      "device": "ahu1",
+      "building": "demo_building", 
+      "points": {
+        "outside_temp": 28.8,
+        "supply_temp": 18.3,
+        "setpoint": 18.0,
+        "vfd_speed": 55.7,
+        "fan_status": "ON",
+        "alarm": null
+      }
+    },
+    {
+      "ts": 1690000180000,
+      "device": "ahu1",
+      "building": "demo_building",
+      "points": {
+        "outside_temp": 30.2,
+        "supply_temp": 19.1,
+        "setpoint": 18.0,
+        "vfd_speed": 67.4,
+        "fan_status": "ON",
+        "alarm": "High Supply Temp"
+      }
+    },
+    {
+      "ts": 1690000240000,
+      "device": "ahu1",
+      "building": "demo_building",
+      "points": {
+        "outside_temp": 30.5,
+        "supply_temp": 18.9,
+        "setpoint": 18.0,
+        "vfd_speed": 72.1,
+        "fan_status": "ON",
+        "alarm": null
+      }
+    }
+  ],
+  "alarms": [
+    {
+      "id": 1690000180000,
+      "timestamp": "2023-07-22T10:03:00.000Z",
+      "device": "ahu1",
+      "building": "demo_building",
+      "message": "High Supply Temp",
+      "severity": "warning"
+    },
+    {
+      "id": 1690000000000,
+      "timestamp": "2023-07-22T10:00:00.000Z", 
+      "device": "ahu2",
+      "building": "demo_building",
+      "message": "Filter Alarm",
+      "severity": "info"
+    }
+  ]
+}

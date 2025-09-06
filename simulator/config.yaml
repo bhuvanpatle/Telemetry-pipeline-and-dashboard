@@ -1,0 +1,24 @@
+# AHU Simulator Configuration
+
+# MQTT Settings
+mqtt_broker: "localhost"
+mqtt_port: 1883
+mqtt_topic: "building/ahu1/telemetry"
+
+# Device Information
+device_id: "ahu1"
+building_id: "demo_building"
+
+# Location for weather API (New York City)
+latitude: 40.7128
+longitude: -74.0060
+
+# PID Controller Parameters
+pid_kp: 2.0 # Proportional gain
+pid_ki: 0.1 # Integral gain
+pid_kd: 0.05 # Derivative gain
+
+# Simulation Parameters
+initial_setpoint: 18.0 # °C
+min_vfd_speed: 50.0 # %
+max_vfd_speed: 100.0 # %

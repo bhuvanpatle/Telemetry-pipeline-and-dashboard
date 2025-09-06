@@ -1,0 +1,15 @@
+# Telemetry Collector Configuration
+
+# MQTT Settings
+mqtt:
+  broker: "localhost"
+  port: 1883
+  topic_pattern: "building/#"
+
+# InfluxDB Settings
+influxdb:
+  url: "http://localhost:8086"
+  token: "telemetry-token-12345"
+  org: "telemetry"
+  bucket: "building_data"
+  measurement: "telemetry"

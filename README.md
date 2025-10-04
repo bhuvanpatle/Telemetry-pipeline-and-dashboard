@@ -6,21 +6,21 @@ A complete end-to-end telemetry pipeline for building management systems featuri
 
 ```
 ┌─────────────────┐    MQTT     ┌─────────────────┐    InfluxDB    ┌─────────────────┐
-│ AHU Simulator   │────────────▶│ Mosquitto MQTT │────────────────▶│   InfluxDB      │
+│ AHU Simulator   │───────────▶│ Mosquitto MQTT  │───────────────▶│   InfluxDB      │
 │ (DDC Logic)     │             │    Broker       │                │ (Time Series)   │
 └─────────────────┘             └─────────────────┘                └─────────────────┘
-                                         │                                   │
+                                        │                                   │
 ┌─────────────────┐                     │                                   │
 │ BDG Replay Tool │─────────────────────┘                                   │
 │ (Historical)    │                                                         │
 └─────────────────┘                                                         │
-                                                                             │
-┌─────────────────┐    REST API                    ┌─────────────────┐     │
+                                                                            │
+┌─────────────────┐     REST API                    ┌─────────────────┐     │
 │ React Frontend  │◀───────────┐                   │    Grafana      │◀────┘
 │ (Dashboard)     │             │                   │  (Dashboards)   │
 └─────────────────┘             │                   └─────────────────┘
          │                      │
-         └─── WebSocket ─────────┼──────────────────────────────────────────┘
+         └─── WebSocket ────────┼──────────────────────────────────────────┘
                                 │
                         ┌─────────────────┐
                         │ FastAPI Backend │
